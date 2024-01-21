@@ -42,3 +42,13 @@ blocked-paths:
 # - /v1/ping
 # - /v1/players/{uuid}
 # - /v1/server/*
+
+permissions:
+  /v1/ping: "admin"
+
+keys:
+  "change_me":
+    - "*"
+  "change_me2":
+    - "admin"
+    - "user"

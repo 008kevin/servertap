@@ -29,6 +29,7 @@ public class WebServer {
     private static final String[] noAuthPaths = new String[]{"/swagger", "/swagger-docs", "/webjars"};
 
     private final Logger log;
+    private final FileConfiguration config = ServerTapMain.instance.getConfig();
     private final Javalin javalin;
 
     private final boolean isDebug;
@@ -104,10 +105,18 @@ public class WebServer {
         }
 
         // Auth is turned on, make sure there is a header called "key"
+        Map<String, Object> permissionMap = config.getConfigurationSection("permissions").getValues(false);
+        Map<String, Object> keyMap = config.getConfigurationSection("keys").getValues(false);
         String authHeader = ctx.header(SERVERTAP_KEY_HEADER);
-        if (authHeader != null && Objects.equals(authHeader, authKey)) {
-            handler.handle(ctx);
-            return;
+
+        if (authHeader != null && keyMap.containsKey(authHeader)) {
+            List<String> permList = config.getStringList("keys." + authHeader);
+            // Check if given key has permission to access endpoint
+            if ((permissionMap.containsKey(ctx.path()) && permList.contains(permissionMap.get(ctx.path()).toString())) || permList.contains("*")) {
+                handler.handle(ctx);
+                return;
+            }
+
         }
 
         // If the request is still not handled, check for a cookie (websockets use cookies for auth)
